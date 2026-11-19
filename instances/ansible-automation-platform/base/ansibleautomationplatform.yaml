@@ -6,6 +6,13 @@ metadata:
 spec:
   # REQUIRED: Replace with the platform's DNS hostname (no scheme or path).
   hostname: aap.apps.your-cluster.example.com
+  # Create this TLS Secret in the instance namespace before applying.
+  gateway_tls_enabled: true
+  gateway_tls_secret_name: aap-gateway-tls
+  service_type: ClusterIP
+  ingress_type: route
+  # The gateway presents the Secret's certificate through the OpenShift router.
+  route_tls_termination_mechanism: passthrough
   # Keep sensitive Ansible task output suppressed.
   no_log: true
   controller:

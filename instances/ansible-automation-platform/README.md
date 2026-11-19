@@ -33,16 +33,49 @@ patch if needed.
 The platform-level `hostname` field is also used in Red Hat's
 [AAP on OpenShift example](https://cloud.redhat.com/experts/aro/aap/).
 
-Ensure the hostname resolves to the OpenShift ingress endpoint and the serving
-TLS certificate covers it. A hostname under the cluster's existing apps domain
-can use its wildcard DNS and certificate where configured. Setting this value
-does not create DNS records or certificates.
+Ensure the hostname resolves to the OpenShift ingress endpoint. Setting this
+value does not create DNS records or certificates.
 
 Verify the field against the installed operator before applying:
 
 ```sh
 oc explain ansibleautomationplatform.spec.hostname
 ```
+
+## Configure the TLS Secret
+
+The base enables gateway TLS with a passthrough Route and references
+`aap-gateway-tls`. Create that Secret in `ansible-automation-platform` after the
+namespace exists and before applying the instance:
+
+```sh
+oc create secret tls aap-gateway-tls \
+  -n ansible-automation-platform \
+  --cert=/secure/path/fullchain.pem \
+  --key=/secure/path/tls.key
+```
+
+Use your certificate chain and matching private key; the certificate's SAN must
+cover `spec.hostname`. This command creates the `tls.crt` and `tls.key` entries.
+For an existing Secret, change `spec.gateway_tls_secret_name` in the base to its
+name. Keep certificate/key files and Secret payloads outside Git.
+
+Clients must use HTTPS. The gateway serves this certificate; the router passes
+TLS through. After rotating the Secret, restart the gateway:
+
+```sh
+oc rollout restart deployment/aap-gateway -n ansible-automation-platform
+```
+
+Verify configuration after reconciliation:
+
+```sh
+oc get ansibleautomationplatform aap -n ansible-automation-platform \
+  -o jsonpath='{.status.conditions[?(@.type=="ConfigurationValid")]}{"\n"}'
+```
+
+Expect `True`; a missing Secret can cause `False`. See
+[Red Hat gateway TLS configuration](https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.7/install-configure_your_ansible_automation_platform_deployment).
 
 ## Default storage
 
@@ -94,9 +127,8 @@ oc apply -k instances/ansible-automation-platform/overlays/2.7
 ```
 
 The cluster must be able to pull the required Red Hat images and have sufficient
-capacity for the selected components. This config sets the platform hostname and
-uses the operator's TLS defaults; inspect the resulting route and certificate for
-your environment.
+capacity for the selected components. Configure the hostname and TLS Secret above
+before applying; inspect the resulting route and certificate for your environment.
 No passwords, pull-secret payloads, or other credential values are stored here.
 Keep credentials in cluster Secrets or your external secret-management system.
 

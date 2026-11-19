@@ -65,7 +65,8 @@ instances/ansible-automation-platform/
 
 After completing the operator installation below, replace the `spec.hostname`
 placeholder in `instances/ansible-automation-platform/base/ansibleautomationplatform.yaml`,
-follow the instance README, and run this from the repository root:
+create the TLS Secret referenced by `spec.gateway_tls_secret_name` as described
+in the instance README, and run this from the repository root:
 
 ```sh
 oc apply -k instances/ansible-automation-platform/overlays/2.7
