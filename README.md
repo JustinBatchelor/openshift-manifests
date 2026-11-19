@@ -7,20 +7,37 @@ Creates a Namespace, OperatorGroup, and Subscription. A separate
 
 ## Version options
 
-These are the three newest AAP 2.7 patch releases listed in Red Hat's documentation
-when checked on November 18, 2026. All use the `stable-2.7` channel and
+The included overlays select these AAP 2.7 patch releases from Red Hat's documentation,
+checked on November 18, 2026. Both use the `stable-2.7` channel and
 namespace-scoped CSVs. Catalog availability on the target cluster must be checked
 before installation; its API hostname did not resolve during preparation.
 
 | Overlay | Release date | Exact starting CSV |
 | --- | --- | --- |
-| `overlays/2.7-12.3` (default) | November 11, 2026 | `aap-operator.v2.7.0-0.1794269743` |
-| `overlays/2.7-12.2` | November 2, 2026 | `aap-operator.v2.7.0-0.1793374941` |
-| `overlays/2.7-12.1` | October 27, 2026 | `aap-operator.v2.7.0-0.1793214862` |
+| `overlays/2.7/12.3` | November 11, 2026 | `aap-operator.v2.7.0-0.1794269743` |
+| `overlays/2.7/12.2` | November 2, 2026 | `aap-operator.v2.7.0-0.1793374941` |
 
 Release sources: [2.7-12.3](https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.7/whats_new-aap_2026_11_11),
-[2.7-12.2](https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.7/whats_new-aap_2026_11_02),
-[2.7-12.1](https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.7/whats_new-aap_27_2026_10_27).
+[2.7-12.2](https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.7/whats_new-aap_2026_11_02).
+
+## Repository layout
+
+```text
+manifests/operators/ansible-automation-platform/
+├── base
+│   ├── kustomization.yaml
+│   ├── namespace.yaml
+│   ├── operatorgroup.yaml
+│   └── subscription.yaml
+└── overlays
+    └── 2.7
+        ├── 12.2
+        │   ├── kustomization.yaml
+        │   └── subscription-patch.yaml
+        └── 12.3
+            ├── kustomization.yaml
+            └── subscription-patch.yaml
+```
 
 ## How pinning works
 
@@ -58,17 +75,17 @@ assumes a fresh dedicated namespace.
 ## Render and install one option
 
 ```sh
-cd ~/codex/work/ibx/manifests/ansible-automation-platform-operator
+cd ~/codex/work/ibx/manifests/operators/ansible-automation-platform
 
-# Preview the default (2.7-12.3); this does not contact the cluster.
-oc kustomize .
+# Preview 2.7-12.3; this does not contact the cluster.
+oc kustomize overlays/2.7/12.3
 
 # Create the three resources. Installation waits for manual approval.
-oc apply -k .
+oc apply -k overlays/2.7/12.3
 ```
 
 To choose an older option for a fresh install, use
-`oc apply -k overlays/2.7-12.2` or `oc apply -k overlays/2.7-12.1` instead.
+`oc apply -k overlays/2.7/12.2` instead.
 Apply only one option. Do not apply `base/` directly: its version fields are
 deliberate placeholders. To use another CSV, copy an overlay and edit its
 `subscription-patch.yaml` channel and startingCSV together.
