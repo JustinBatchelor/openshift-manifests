@@ -14,6 +14,36 @@ This overlay works with either included AAP 2.7 operator patch release. The
 operator Subscription selects the CSV; this instance does not independently pin
 component versions or override the operator's bundled images.
 
+## Set the platform hostname
+
+Before applying the instance, edit `spec.hostname` in
+[base/ansibleautomationplatform.yaml](base/ansibleautomationplatform.yaml):
+
+```yaml
+spec:
+  hostname: aap.apps.your-cluster.example.com
+```
+
+Replace this placeholder with the DNS hostname for your platform gateway, without
+`https://`, a port, or a URL path. The `overlays/2.7` Kustomization includes this
+base, so the hostname is carried into the rendered `AnsibleAutomationPlatform`.
+An environment-specific overlay can override `spec.hostname` in its platform
+patch if needed.
+
+The platform-level `hostname` field is also used in Red Hat's
+[AAP on OpenShift example](https://cloud.redhat.com/experts/aro/aap/).
+
+Ensure the hostname resolves to the OpenShift ingress endpoint and the serving
+TLS certificate covers it. A hostname under the cluster's existing apps domain
+can use its wildcard DNS and certificate where configured. Setting this value
+does not create DNS records or certificates.
+
+Verify the field against the installed operator before applying:
+
+```sh
+oc explain ansibleautomationplatform.spec.hostname
+```
+
 ## Default storage
 
 Storage-class fields are deliberately omitted. The generated PVCs can use the
@@ -44,7 +74,7 @@ Confirm the actual PVCs use the expected class on your installed operator build.
 
 Run from the repository root. First install the operator, approve its initial
 InstallPlan, and confirm the selected CSV is `Succeeded` as described in the
-[repository README](../../../README.md). This instance configuration does not
+[repository README](../../README.md). This instance configuration does not
 create another Namespace, Subscription, or OperatorGroup.
 
 ```sh
@@ -53,19 +83,20 @@ oc wait --for=condition=Established \
   crd/ansibleautomationplatforms.aap.ansible.com --timeout=120s
 
 # Render locally.
-oc kustomize manifests/instances/ansible-automation-platform/overlays/2.7
+oc kustomize instances/ansible-automation-platform/overlays/2.7
 
 # Validate against the installed CRD and admission policies, without persisting.
 oc apply --dry-run=server \
-  -k manifests/instances/ansible-automation-platform/overlays/2.7
+  -k instances/ansible-automation-platform/overlays/2.7
 
 # Create the instance after validation succeeds.
-oc apply -k manifests/instances/ansible-automation-platform/overlays/2.7
+oc apply -k instances/ansible-automation-platform/overlays/2.7
 ```
 
 The cluster must be able to pull the required Red Hat images and have sufficient
-capacity for the selected components. This config uses the operator's route/TLS
-defaults; inspect the resulting route and certificate for your environment.
+capacity for the selected components. This config sets the platform hostname and
+uses the operator's TLS defaults; inspect the resulting route and certificate for
+your environment.
 No passwords, pull-secret payloads, or other credential values are stored here.
 Keep credentials in cluster Secrets or your external secret-management system.
 

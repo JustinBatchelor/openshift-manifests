@@ -4,6 +4,8 @@ metadata:
   name: aap
   namespace: ansible-automation-platform
 spec:
+  # REQUIRED: Replace with the platform's DNS hostname (no scheme or path).
+  hostname: aap.apps.your-cluster.example.com
   # Keep sensitive Ansible task output suppressed.
   no_log: true
   controller:

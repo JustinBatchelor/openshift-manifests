@@ -9,7 +9,7 @@ Installs the namespace-scoped `ansible-automation-platform-operator` through
 classic OpenShift OLM into the dedicated `ansible-automation-platform` namespace.
 The operator manifests create a Namespace, OperatorGroup, and Subscription.
 After the operator is installed, deploy the
-[platform instance](manifests/instances/ansible-automation-platform/README.md)
+[platform instance](instances/ansible-automation-platform/README.md)
 to enable Controller, Automation Hub, and Event-Driven Ansible using the cluster's
 default storage class (RWX support is required for Hub).
 
@@ -33,7 +33,7 @@ Release sources: [2.7-12.3](https://docs.redhat.com/en/documentation/red_hat_ans
 Operator installation:
 
 ```text
-manifests/operators/ansible-automation-platform/
+operators/ansible-automation-platform/
 ├── base
 │   ├── kustomization.yaml
 │   ├── namespace.yaml
@@ -52,7 +52,7 @@ manifests/operators/ansible-automation-platform/
 Platform instance:
 
 ```text
-manifests/instances/ansible-automation-platform/
+instances/ansible-automation-platform/
 ├── README.md
 ├── base
 │   ├── kustomization.yaml
@@ -63,11 +63,12 @@ manifests/instances/ansible-automation-platform/
         └── platform-patch.yaml
 ```
 
-After completing the operator installation below, follow the instance README and
-run this from the repository root:
+After completing the operator installation below, replace the `spec.hostname`
+placeholder in `instances/ansible-automation-platform/base/ansibleautomationplatform.yaml`,
+follow the instance README, and run this from the repository root:
 
 ```sh
-oc apply -k manifests/instances/ansible-automation-platform/overlays/2.7
+oc apply -k instances/ansible-automation-platform/overlays/2.7
 ```
 
 ## How pinning works
@@ -106,7 +107,7 @@ assumes a fresh dedicated namespace.
 ## Render and install one option
 
 ```sh
-cd ~/codex/work/openshift-manifests/manifests/operators/ansible-automation-platform
+cd ~/codex/work/openshift-manifests/operators/ansible-automation-platform
 
 # Preview 2.7-12.3; this does not contact the cluster.
 oc kustomize overlays/2.7/12.3
