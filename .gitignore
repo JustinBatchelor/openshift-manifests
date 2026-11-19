@@ -1,0 +1,41 @@
+# Local credentials and authentication configuration, at any depth.
+creds/
+credentials/
+secrets/
+.aws/
+.ssh/
+.kube/
+.docker/
+.env
+.env.*
+*.env
+!.env.example
+kubeconfig
+kubeconfig.*
+*.kubeconfig
+auth.json
+credentials.json
+credentials.yaml
+credentials.yml
+pull-secret*
+pull_secret*
+*secret.yaml
+*secret.yml
+*secrets.yaml
+*secrets.yml
+
+# Private keys and credential bundles.
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+id_rsa*
+id_ed25519*
+id_ecdsa*
+id_dsa*
+*.tfstate
+*.tfstate.*
+
+# Local operating-system metadata.
+.DS_Store

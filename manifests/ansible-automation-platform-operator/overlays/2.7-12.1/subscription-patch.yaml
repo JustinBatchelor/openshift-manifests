@@ -1,0 +1,9 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: ansible-automation-platform
+  namespace: ansible-automation-platform
+spec:
+  channel: stable-2.7
+  # Namespace-scoped bundle, October 27, 2026.
+  startingCSV: aap-operator.v2.7.0-0.1793214862

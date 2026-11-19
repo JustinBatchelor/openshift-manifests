@@ -1,0 +1,15 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: ansible-automation-platform
+  namespace: ansible-automation-platform
+spec:
+  name: ansible-automation-platform-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  # Approve the initial InstallPlan only after checking its CSVs.
+  # Later upgrades also require approval; startingCSV alone is not a version lock.
+  installPlanApproval: Manual
+  # Use an overlay, which replaces both values with a specific release.
+  channel: REPLACE-WITH-CHANNEL
+  startingCSV: REPLACE-WITH-CSV
