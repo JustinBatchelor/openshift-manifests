@@ -1,0 +1,13 @@
+apiVersion: aap.ansible.com/v1alpha1
+kind: AnsibleAutomationPlatform
+metadata:
+  name: aap
+  namespace: ansible-automation-platform
+spec:
+  # Operator-managed database; storage-class selection uses cluster defaults.
+  database:
+    storage_requirements:
+      requests:
+        storage: 100Gi
+  hub:
+    file_storage_size: 10Gi

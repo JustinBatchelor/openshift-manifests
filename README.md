@@ -1,9 +1,12 @@
-# Ansible Automation Platform operator with a pinned starting CSV
+# Ansible Automation Platform on OpenShift
 
 Installs the namespace-scoped `ansible-automation-platform-operator` through
 classic OpenShift OLM into the dedicated `ansible-automation-platform` namespace.
-Creates a Namespace, OperatorGroup, and Subscription. A separate
-`AnsibleAutomationPlatform` custom resource is needed to deploy a platform instance.
+The operator manifests create a Namespace, OperatorGroup, and Subscription.
+After the operator is installed, deploy the
+[platform instance](manifests/instances/ansible-automation-platform/README.md)
+to enable Controller, Automation Hub, and Event-Driven Ansible using the cluster's
+default storage class (RWX support is required for Hub).
 
 ## Version options
 
@@ -22,6 +25,8 @@ Release sources: [2.7-12.3](https://docs.redhat.com/en/documentation/red_hat_ans
 
 ## Repository layout
 
+Operator installation:
+
 ```text
 manifests/operators/ansible-automation-platform/
 ├── base
@@ -37,6 +42,27 @@ manifests/operators/ansible-automation-platform/
         └── 12.3
             ├── kustomization.yaml
             └── subscription-patch.yaml
+```
+
+Platform instance:
+
+```text
+manifests/instances/ansible-automation-platform/
+├── README.md
+├── base
+│   ├── kustomization.yaml
+│   └── ansibleautomationplatform.yaml
+└── overlays
+    └── 2.7
+        ├── kustomization.yaml
+        └── platform-patch.yaml
+```
+
+After completing the operator installation below, follow the instance README and
+run this from the repository root:
+
+```sh
+oc apply -k manifests/instances/ansible-automation-platform/overlays/2.7
 ```
 
 ## How pinning works
