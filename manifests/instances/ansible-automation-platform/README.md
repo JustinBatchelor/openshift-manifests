@@ -5,9 +5,9 @@ in `ansible-automation-platform`, the namespace watched by this repository's
 operator installation. It enables platform gateway, automation controller,
 Automation Hub, and Event-Driven Ansible. Lightspeed and MCP are disabled.
 
-The `overlays/2.7` overlay uses operator-managed PostgreSQL with a 100Gi database
-volume request and 10Gi of shared Hub file storage. These are starting sizes,
-not a production capacity or availability design. Adjust sizes in
+The `overlays/2.7` overlay uses operator-managed PostgreSQL with a 20Gi database
+volume request and 10Gi of shared Hub file storage. These are starting sizes for
+a small lab, not a production capacity or availability design. Adjust sizes in
 `overlays/2.7/platform-patch.yaml` before deploying.
 
 This overlay works with either included AAP 2.7 operator patch release. The
