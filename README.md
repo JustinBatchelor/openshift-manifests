@@ -1,4 +1,9 @@
-# Ansible Automation Platform on OpenShift
+# OpenShift manifests
+
+Kustomize manifests for installing and configuring workloads on OpenShift.
+Currently includes Ansible Automation Platform operator and instance deployments.
+
+## Ansible Automation Platform
 
 Installs the namespace-scoped `ansible-automation-platform-operator` through
 classic OpenShift OLM into the dedicated `ansible-automation-platform` namespace.
@@ -101,7 +106,7 @@ assumes a fresh dedicated namespace.
 ## Render and install one option
 
 ```sh
-cd ~/codex/work/ibx/manifests/operators/ansible-automation-platform
+cd ~/codex/work/openshift-manifests/manifests/operators/ansible-automation-platform
 
 # Preview 2.7-12.3; this does not contact the cluster.
 oc kustomize overlays/2.7/12.3
