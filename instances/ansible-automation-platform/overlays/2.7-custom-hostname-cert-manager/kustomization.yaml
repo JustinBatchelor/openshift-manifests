@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../2.7-custom-hostname
+  - certificate.yaml
+patches:
+  - path: certificate-patch.yaml
+# Keep the certificate SAN and output Secret aligned with the AAP patch.
+replacements:
+  - source:
+      kind: AnsibleAutomationPlatform
+      name: aap
+      fieldPath: spec.route_host
+    targets:
+      - select:
+          kind: Certificate
+          name: aap-route
+        fieldPaths:
+          - spec.dnsNames.0
+  - source:
+      kind: AnsibleAutomationPlatform
+      name: aap
+      fieldPath: spec.route_tls_secret
+    targets:
+      - select:
+          kind: Certificate
+          name: aap-route
+        fieldPaths:
+          - spec.secretName

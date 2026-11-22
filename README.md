@@ -58,18 +58,39 @@ instances/ansible-automation-platform/
 │   ├── kustomization.yaml
 │   └── ansibleautomationplatform.yaml
 └── overlays
-    └── 2.7
+    ├── 2.7
+    │   ├── kustomization.yaml
+    │   └── platform-patch.yaml
+    ├── 2.7-custom-hostname
+    │   ├── kustomization.yaml
+    │   └── platform-patch.yaml
+    └── 2.7-custom-hostname-cert-manager
         ├── kustomization.yaml
-        └── platform-patch.yaml
+        ├── certificate.yaml
+        └── certificate-patch.yaml
 ```
 
 After completing the operator installation below, follow the instance README
-and run this from the repository root. The testing overlay creates `aap-jbatchel`
-using the operator's default hostname and TLS configuration:
+and run this from the repository root. Every instance overlay creates `aap`
+without a name suffix. The default overlay uses the operator's generated hostname
+and default TLS configuration:
 
 ```sh
 oc apply -k instances/ansible-automation-platform/overlays/2.7
 ```
+
+For a custom DNS name and manually supplied TLS certificate, use
+`instances/ansible-automation-platform/overlays/2.7-custom-hostname`.
+Edit hostname, Route host, TLS mode and Secret reference in its
+[`platform-patch.yaml`](instances/ansible-automation-platform/overlays/2.7-custom-hostname/platform-patch.yaml).
+An optional `2.7-custom-hostname-cert-manager` overlay requests the certificate
+using an existing issuer. Follow the [instance guide](instances/ansible-automation-platform/README.md)
+for DNS, certificate preparation, patch settings and verification before applying.
+Choose one instance overlay; they all manage the same `aap` resource.
+
+**Name change:** older revisions rendered `aap-jbatchel`. Applying this revision
+does not rename that resource or migrate its data; inspect existing instances
+before deploying. See the instance guide for transition considerations.
 
 ## How pinning works
 
@@ -107,7 +128,8 @@ assumes a fresh dedicated namespace.
 ## Render and install one option
 
 ```sh
-cd ~/codex/work/openshift-manifests/operators/ansible-automation-platform
+# From the repository root:
+cd operators/ansible-automation-platform
 
 # Preview 2.7-12.3; this does not contact the cluster.
 oc kustomize overlays/2.7/12.3
