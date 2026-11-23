@@ -1,0 +1,10 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: openshift-gitops-operator
+  namespace: openshift-gitops-operator
+spec:
+  # Channel and bundle availability verified in a Red Hat catalog on 2026-11-23.
+  # Check the target cluster's catalog before installation.
+  channel: gitops-1.22
+  startingCSV: openshift-gitops-operator.v1.22.3

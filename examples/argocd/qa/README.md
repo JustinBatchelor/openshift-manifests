@@ -24,6 +24,11 @@ creating a second Application for the same resources.
 
 ## Prepare the source and permissions
 
+For a cluster without GitOps, first follow the
+[GitOps operator bootstrap guide](../../../operators/openshift-gitops/README.md).
+It creates the default Argo CD instance in `openshift-gitops`; configure private
+repository access separately before creating these Applications.
+
 Run commands from the repository root after selecting the QA OpenShift context
 and logging the Argo CD CLI into QA's GitOps server. The selected AppProject and
 controller must permit the repository, destination, Namespace, OperatorGroup,
