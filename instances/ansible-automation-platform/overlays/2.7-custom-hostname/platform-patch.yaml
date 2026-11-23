@@ -4,7 +4,7 @@ metadata:
   name: aap
   namespace: ansible-automation-platform
 spec:
-  # Replace both values with the customer's FQDN, without a URL scheme or path.
+  # Replace both values with the intended FQDN, without a URL scheme or path.
   # For OpenShift Routes, route_host is required; hostname alone is insufficient.
   hostname: ansible.qa.example.com
   route_host: ansible.qa.example.com

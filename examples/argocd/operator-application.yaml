@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aap-operator
+  namespace: openshift-gitops
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/JustinBatchelor/openshift-manifests.git
+    # Known merged revision containing both deployment overlays.
+    # Set this to your reviewed commit when changing the source configuration.
+    targetRevision: 53b286e28d25c03ed9a9445019ede26d857044dd
+    path: operators/ansible-automation-platform/overlays/2.7/12.3
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ansible-automation-platform
+  # Sync manually, then approve the OLM InstallPlan and wait for the operator.
