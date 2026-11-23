@@ -1,0 +1,17 @@
+apiVersion: aap.ansible.com/v1alpha1
+kind: AnsibleAutomationPlatform
+metadata:
+  name: aap
+  namespace: ansible-automation-platform
+spec:
+  # Replace both values with the customer's FQDN, without a URL scheme or path.
+  # For OpenShift Routes, route_host is required; hostname alone is insufficient.
+  hostname: ansible.qa.example.com
+  route_host: ansible.qa.example.com
+  service_type: ClusterIP
+  ingress_type: Route
+  # TLS terminates at the OpenShift router; router-to-gateway traffic is HTTP.
+  route_tls_termination_mechanism: Edge
+  gateway_tls_enabled: false
+  # Manually create this kubernetes.io/tls Secret in the instance namespace.
+  route_tls_secret: aap-route-tls

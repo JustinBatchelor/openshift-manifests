@@ -4,12 +4,7 @@ metadata:
   name: aap
   namespace: ansible-automation-platform
 spec:
-  # hostname: aap.apps.your-cluster.example.com
-  # gateway_tls_enabled: true
-  # gateway_tls_secret_name: aap-gateway-tls
-  # service_type: ClusterIP
-  # ingress_type: route
-  # route_tls_termination_mechanism: passthrough
+  # Site-specific networking belongs in an overlay's platform-patch.yaml.
   no_log: true
   controller:
     disabled: false
