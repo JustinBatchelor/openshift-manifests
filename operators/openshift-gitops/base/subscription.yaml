@@ -1,0 +1,15 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: openshift-gitops-operator
+  namespace: openshift-gitops-operator
+spec:
+  name: openshift-gitops-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  # Review and approve the initial InstallPlan and each subsequent upgrade.
+  # startingCSV selects the initial bundle; it is not an upgrade version lock.
+  installPlanApproval: Manual
+  # Use an overlay, which replaces both values with a specific release.
+  channel: REPLACE-WITH-CHANNEL
+  startingCSV: REPLACE-WITH-CSV

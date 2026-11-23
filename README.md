@@ -1,7 +1,28 @@
 # OpenShift manifests
 
 Kustomize manifests for installing and configuring workloads on OpenShift.
-Currently includes Ansible Automation Platform operator and instance deployments.
+Includes OpenShift GitOps operator installation and Ansible Automation Platform
+operator and instance deployments.
+
+## OpenShift GitOps
+
+Use the [GitOps operator guide](operators/openshift-gitops/README.md) to bootstrap
+OpenShift GitOps before deploying the AAP Argo CD Application examples. The
+Kustomize base and version overlay install the operator in
+`openshift-gitops-operator` with all-namespace scope and manual OLM approval.
+The operator creates the default Argo CD instance in `openshift-gitops`.
+
+The included `operators/openshift-gitops/overlays/1.22/1.22.3` overlay selects
+channel `gitops-1.22` and starting CSV `openshift-gitops-operator.v1.22.3`.
+Render it from the repository root:
+
+```sh
+oc kustomize operators/openshift-gitops/overlays/1.22/1.22.3
+```
+
+Follow the guide for prerequisites, installation, readiness checks and separate
+private-repository authentication. Inspect existing installations before applying;
+the example does not migrate an existing GitOps deployment.
 
 ## Ansible Automation Platform
 

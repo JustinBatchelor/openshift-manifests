@@ -1,0 +1,8 @@
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: openshift-gitops-operator
+  namespace: openshift-gitops-operator
+spec:
+  # GitOps requires all-namespace scope; do not add targetNamespaces or a selector.
+  upgradeStrategy: Default
