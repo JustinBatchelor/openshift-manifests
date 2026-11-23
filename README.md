@@ -13,6 +13,10 @@ After the operator is installed, deploy the
 to enable Controller, Automation Hub, and Event-Driven Ansible using the cluster's
 default storage class (RWX support is required for Hub).
 
+For GitOps deployment, use the [Argo CD Application examples](examples/argocd/README.md).
+They reference the operator and instance Kustomize overlays separately and walk
+through OLM installation, manual TLS Secret creation and instance synchronization.
+
 ## Version options
 
 The included overlays select these AAP 2.7 patch releases from Red Hat's documentation,

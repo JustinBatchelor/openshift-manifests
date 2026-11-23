@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aap-instance
+  namespace: openshift-gitops
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/JustinBatchelor/openshift-manifests.git
+    # Point to your reviewed commit with the hostname and TLS Secret patch.
+    targetRevision: 53b286e28d25c03ed9a9445019ede26d857044dd
+    path: instances/ansible-automation-platform/overlays/2.7-custom-hostname
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ansible-automation-platform
+  # Sync manually after the operator is ready and the TLS Secret exists.

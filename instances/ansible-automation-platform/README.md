@@ -148,6 +148,10 @@ instance, TLS Secret and patch namespace together.
 
 ## Render, validate and deploy
 
+To deploy through Argo CD, follow the
+[Application examples](../../examples/argocd/README.md) instead of applying the
+instance directly. They reference this same Kustomize overlay from Git.
+
 Confirm the operator CSV is `Succeeded`, image pulls are authorized, and the
 cluster has capacity and suitable storage. Select one overlay below; for the
 default generated hostname, change the value to the `2.7` path instead.
