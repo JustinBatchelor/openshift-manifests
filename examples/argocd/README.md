@@ -29,6 +29,9 @@ Use an existing Argo CD or OpenShift GitOps installation and log in with its CLI
 or UI. For a new installation, first follow the
 [GitOps operator bootstrap guide](../../operators/openshift-gitops/README.md).
 These Application examples do not install GitOps, create an AppProject or grant RBAC.
+For private source repositories, use the
+[oc repository credential examples](../../operators/openshift-gitops/README.md#register-a-private-repository-with-oc)
+before creating the Applications.
 Run commands below from this repository's root using the intended cluster context.
 
 | Field in both Applications | Example value | When to change it |
