@@ -13,5 +13,5 @@ spec:
   # TLS terminates at the OpenShift router; router-to-gateway traffic is HTTP.
   route_tls_termination_mechanism: Edge
   gateway_tls_enabled: false
-  # A kubernetes.io/tls Secret in the same namespace as this instance.
+  # Manually create this kubernetes.io/tls Secret in the instance namespace.
   route_tls_secret: aap-route-tls

@@ -16,11 +16,10 @@ They inherit the operator's component versions; the Subscription selects the CSV
 | --- | --- | --- |
 | `2.7` | Operator-generated hostname and default TLS settings | Cluster's default ingress certificate |
 | `2.7-custom-hostname` | Custom OpenShift Route with edge TLS | TLS Secret created manually from PEM files |
-| `2.7-custom-hostname-cert-manager` | Same custom Route | Optional cert-manager Certificate using an existing issuer |
 
 Choose **one** overlay for the instance. They all render the same resource name
-and namespace. The default option does not require cert-manager or a custom Secret.
-Do not apply the individual base, patch or certificate files directly; Kustomize
+and namespace. The default option does not require a custom Secret.
+Do not apply the individual base or patch files directly; Kustomize
 combines them into complete resources.
 
 ## Instance name and existing deployments
@@ -46,13 +45,11 @@ Keep reusable component defaults in `base/`. Edit these files for the environmen
 | --- | --- |
 | [`overlays/2.7/platform-patch.yaml`](overlays/2.7/platform-patch.yaml) | Database size, Hub size; add approved storage classes or component overrides here |
 | [`overlays/2.7-custom-hostname/platform-patch.yaml`](overlays/2.7-custom-hostname/platform-patch.yaml) | `hostname`, `route_host`, `route_tls_secret`, ingress and TLS mode |
-| [`overlays/2.7-custom-hostname-cert-manager/certificate-patch.yaml`](overlays/2.7-custom-hostname-cert-manager/certificate-patch.yaml) | Certificate `issuerRef` and optional issuance settings |
 
-The custom-hostname overlays inherit the `2.7` storage patch. The cert-manager
-overlay additionally inherits the custom-hostname patch, then copies the rendered
-`route_host` into `Certificate.spec.dnsNames[0]` and `route_tls_secret` into
-`Certificate.spec.secretName`. Change the hostname and Secret reference in the
-AAP patch; the certificate values follow automatically when rendered.
+The custom-hostname overlay inherits the `2.7` storage patch. Set the hostname
+and TLS Secret reference in its AAP patch. Create that Secret manually in the
+same namespace before deployment; these manifests do not issue certificates or
+create TLS Secrets.
 For independent environments, copy the overlays and update their relative
 resource paths so they inherit the intended environment's patches.
 
@@ -103,7 +100,7 @@ custom hostname and reach ingress TCP/443. Check from an actual client:
 dig +short ansible.qa.example.com
 ```
 
-## Primary option: manually supplied certificate
+## Create the TLS Secret manually
 
 Obtain a certificate whose SAN covers the chosen hostname, its intermediate
 certificate chain, and the matching private key. Clients must trust the issuing
@@ -118,51 +115,14 @@ oc create secret tls aap-route-tls \
 ```
 
 Use the Secret name from `spec.route_tls_secret` if you changed it. An existing
-appropriate `kubernetes.io/tls` Secret can be reused. Keep PEM files, keys and
-Secret payloads outside Git. This path requires no cert-manager installation.
+appropriate `kubernetes.io/tls` Secret can be reused. The Secret must contain
+`tls.crt` (the certificate and intermediate chain) and `tls.key` (the matching
+private key); `oc create secret tls` creates these entries. Keep PEM files, keys
+and Secret payloads outside Git. The operator reads the referenced Secret to
+configure the custom Route's TLS certificate.
 
 Then use the render, dry-run and apply sequence below with
 `2.7-custom-hostname` selected.
-
-## Optional certificate issuance with cert-manager
-
-Use this option only if cert-manager and its `Certificate` CRD are installed.
-Configure an existing Ready issuer authorized to issue for the customer's domain
-in `certificate-patch.yaml`. The included `customer-production-issuer` is a
-placeholder, not an issuer created by this repository. Use `kind: Issuer` for a
-namespaced issuer in `ansible-automation-platform`, or `ClusterIssuer` for a
-cluster-scoped issuer. Configure the issuer's CA/DNS challenge credentials through
-the customer's secret-management process.
-
-Use a CA trusted by clients; ACME staging certificates are not browser-trusted.
-Do not manually create or rotate a Secret that cert-manager manages. The
-[cert-manager Certificate documentation](https://cert-manager.io/docs/usage/certificate/)
-describes issuance, renewal and the resulting Secret.
-
-The Certificate has a dedicated label so it can be issued before creating AAP:
-
-```sh
-AAP_OVERLAY=instances/ansible-automation-platform/overlays/2.7-custom-hostname-cert-manager
-oc kustomize "$AAP_OVERLAY"
-oc apply --dry-run=server -k "$AAP_OVERLAY"
-
-# Apply only the Certificate, with hostname and Secret replacements resolved.
-oc apply -k "$AAP_OVERLAY" -l app.kubernetes.io/component=route-certificate
-oc wait certificate/aap-route -n ansible-automation-platform \
-  --for=condition=Ready --timeout=300s
-
-# After issuance succeeds, apply the complete overlay, including AAP.
-oc apply -k "$AAP_OVERLAY"
-```
-
-If issuance fails, describe the Certificate and inspect issuer/challenge status:
-
-```sh
-oc describe certificate aap-route -n ansible-automation-platform
-```
-
-The issuer must be able to validate the domain or sign the request; a DNS override alone does not
-satisfy a public CA's ownership validation.
 
 ## Storage and component settings
 
@@ -184,7 +144,7 @@ oc get storageclass
 
 See the [Hub custom resource reference](https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.7/reference-automation_hub_custom_resources).
 If changing the namespace, update the operator namespace/watch scope and every
-instance, Certificate and patch namespace together.
+instance, TLS Secret and patch namespace together.
 
 ## Render, validate and deploy
 
@@ -204,8 +164,8 @@ oc apply --dry-run=server -k "$AAP_OVERLAY"
 oc apply -k "$AAP_OVERLAY"
 ```
 
-Server dry-run validates API schema/admission, not DNS, Secret contents, issuer
-readiness, storage provisioning or operator reconciliation. Existing-instance
+Server dry-run validates API schema/admission, not DNS, Secret contents,
+storage provisioning or operator reconciliation. Existing-instance
 changes also require reviewing old networking fields, component URLs, OAuth/SSO
 redirect URLs and cutover impacts. Do not manage the same CR from competing
 GitOps sources or apply multiple overlays in succession.
@@ -241,23 +201,27 @@ For manually supplied certificates, create a new versioned TLS Secret, change
 After reconciliation, verify the served certificate before retiring the old
 Secret. Keep the previous Secret available until rollback is no longer needed.
 
-cert-manager renews its Secret, but do not assume the AAP operator immediately
-copies renewed material into the Route. In the tested build, a Secret renewal
-needed an explicit spec change to refresh the Route. Add or update this inert
-marker in the custom-hostname platform patch, preserving any other annotations:
+Use the new certificate and key when creating the replacement Secret:
+
+```sh
+oc create secret tls aap-route-tls-v2 \
+  -n ansible-automation-platform \
+  --cert=/secure/path/renewed-fullchain.pem \
+  --key=/secure/path/renewed-tls.key
+```
+
+Update the existing custom-hostname `platform-patch.yaml`:
 
 ```yaml
 spec:
-  route_annotations: |
-    example.com/certificate-refresh: "renewal-002"
+  route_tls_secret: aap-route-tls-v2
 ```
 
-`route_annotations` is a **string containing a YAML mapping** on the tested AAP
-2.7 CRD. Change the marker for each refresh and reapply the selected overlay.
-An arbitrary annotation on the AAP CR metadata did not trigger the same refresh.
-Compare the certificate serial/fingerprint in the Secret with the one served to
-clients. Cert-manager automation alone was not validated as unattended
-end-to-end Route certificate rotation.
+Reapply `2.7-custom-hostname` and compare the certificate serial/fingerprint
+served to clients with the replacement certificate. Changing the Secret reference
+provides an explicit spec change for the operator to reconcile; do not assume
+replacing data in the same Secret automatically refreshes the Route. If rollback
+is needed, restore the previous Secret reference in the patch and reapply it.
 
 The [customer walkthrough](https://github.com/JustinBatchelor/aap-custom-hostname)
 contains detailed TLS, DNS, rotation and rollback procedures, with
@@ -267,12 +231,15 @@ against the installed operator's CRD and repeat the acceptance checks above.
 
 ## Manifest validation
 
-Checked November 21, 2026 (Eastern), using `oc` 4.22.8 and Kustomize 5.7.1:
-all instance and operator overlays render, the default instance retains its
-component/storage configuration with the suffix removed, and edits to the
-hostname, TLS Secret and issuer patches propagate into the certificate as intended.
-All three instance overlays passed strict server dry-run against installed AAP 2.7
-and cert-manager CRDs. The certificate-only apply selector excluded AAP.
+Rechecked November 23, 2026 (Eastern), using `oc` 4.22.8 and Kustomize 5.7.1:
+both instance overlays and both operator overlays render. The retained manifests
+produce the same resources as before this documentation/overlay cleanup; the
+custom-hostname overlay creates only the AAP CR and references a manually supplied
+TLS Secret. The instance name remains `aap` without a suffix.
+
+Both retained instance manifests passed strict server dry-run against the installed
+AAP 2.7 CRD on November 21, 2026. Their rendered configuration is unchanged;
+server dry-run was not repeated for the November 23 cleanup.
 
 The target namespace was absent in the validation cluster, so server dry-runs
 used temporary resource names in an existing namespace. This checked schema and

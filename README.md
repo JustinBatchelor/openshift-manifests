@@ -61,13 +61,9 @@ instances/ansible-automation-platform/
     ├── 2.7
     │   ├── kustomization.yaml
     │   └── platform-patch.yaml
-    ├── 2.7-custom-hostname
-    │   ├── kustomization.yaml
-    │   └── platform-patch.yaml
-    └── 2.7-custom-hostname-cert-manager
+    └── 2.7-custom-hostname
         ├── kustomization.yaml
-        ├── certificate.yaml
-        └── certificate-patch.yaml
+        └── platform-patch.yaml
 ```
 
 After completing the operator installation below, follow the instance README
@@ -83,9 +79,9 @@ For a custom DNS name and manually supplied TLS certificate, use
 `instances/ansible-automation-platform/overlays/2.7-custom-hostname`.
 Edit hostname, Route host, TLS mode and Secret reference in its
 [`platform-patch.yaml`](instances/ansible-automation-platform/overlays/2.7-custom-hostname/platform-patch.yaml).
-An optional `2.7-custom-hostname-cert-manager` overlay requests the certificate
-using an existing issuer. Follow the [instance guide](instances/ansible-automation-platform/README.md)
-for DNS, certificate preparation, patch settings and verification before applying.
+Create the referenced TLS Secret manually before applying the custom-hostname
+overlay. Follow the [instance guide](instances/ansible-automation-platform/README.md)
+for DNS, Secret creation, patch settings and verification.
 Choose one instance overlay; they all manage the same `aap` resource.
 
 **Name change:** older revisions rendered `aap-jbatchel`. Applying this revision
