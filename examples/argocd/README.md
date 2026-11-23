@@ -1,5 +1,11 @@
 # Deploy AAP with Argo CD
 
+For the configured QA environment, use the [QA Application examples](qa/README.md).
+They select the QA overlay with `100G` database storage and `10Gi` Hub storage.
+The generic examples below retain their original paths and sizes. Use one pair
+per cluster; both pairs would manage the same underlying resources. PROD has no
+Application or deployable configuration yet.
+
 These two `Application` examples reference this repository's Kustomize overlays:
 
 | Application | Source path | Managed resources |

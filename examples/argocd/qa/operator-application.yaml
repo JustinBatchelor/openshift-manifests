@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aap-qa-operator
+  namespace: openshift-gitops
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/JustinBatchelor/openshift-manifests.git
+    # Fixed source revision containing the QA overlay and operator manifests.
+    # Set this to your reviewed commit when changing the source configuration.
+    targetRevision: 2255d7c63b46715eae4938e572eb142476ba876c
+    path: operators/ansible-automation-platform/overlays/2.7/12.3
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ansible-automation-platform
+  # Sync manually, then approve the OLM InstallPlan and wait for the operator.

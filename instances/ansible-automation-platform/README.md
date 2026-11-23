@@ -14,13 +14,55 @@ They inherit the operator's component versions; the Subscription selects the CSV
 
 | Overlay under `instances/ansible-automation-platform/overlays/` | Networking | Certificate source |
 | --- | --- | --- |
+| `qa` | QA custom Route with edge TLS; `100G` database and `10Gi` Hub storage | TLS Secret created manually from PEM files |
 | `2.7` | Operator-generated hostname and default TLS settings | Cluster's default ingress certificate |
 | `2.7-custom-hostname` | Custom OpenShift Route with edge TLS | TLS Secret created manually from PEM files |
 
 Choose **one** overlay for the instance. They all render the same resource name
-and namespace. The default option does not require a custom Secret.
+and namespace. The `2.7` option does not require a custom Secret.
 Do not apply the individual base or patch files directly; Kustomize
 combines them into complete resources.
+
+QA is the environment example; the two generic overlays retain their original
+settings for compatibility. `overlays/prod/` contains only `.gitkeep`, because Git
+does not track empty directories. It is not a deployable overlay. QA and future
+PROD use separate clusters with the same AAP name and namespace.
+
+## QA settings
+
+Edit [`overlays/qa/platform-patch.yaml`](overlays/qa/platform-patch.yaml) to change
+QA's environment values without changing the generic examples:
+
+| Setting | QA example |
+| --- | --- |
+| Instance / namespace | `aap` / `ansible-automation-platform` |
+| `hostname` and `route_host` | `ansible.qa.example.com` |
+| `route_tls_secret` | `aap-route-tls`, created manually |
+| `database.storage_requirements.requests.storage` | `100G` |
+| `hub.file_storage_size` | `10Gi` |
+| Controller, Hub and EDA | Enabled in the shared base |
+
+QA inherits `2.7-custom-hostname`, which inherits `2.7` and the shared base.
+The QA patch overrides Route values and storage sizing. Component enablement,
+edge TLS and storage access modes remain shared. No separate per-component
+PostgreSQL deployments are introduced; the operator retains its database wiring.
+
+The database request is **100 decimal GB** (`100G`, not `100Gi`). Red Hat documents
+a 100GB maximum database size for operator-managed PostgreSQL in its
+[AAP 2.7 growth topology](https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.7/plan-ref_ocp_a_env_a),
+under **Tested system configurations → Database**. A volume request is not an
+enforced database quota or a guarantee that 100GB of database data fits:
+filesystem overhead, PostgreSQL WAL and temporary space also consume capacity.
+Monitor usage and leave operating headroom. The documented connection/concurrency
+and replica limits still apply; increasing a PVC does not remove them.
+
+Hub's `10Gi` RWX file volume is a separate illustrative content-storage allocation,
+not part of the PostgreSQL limit. Review its capacity for your collections and
+container images. Both storage-class fields remain omitted; the default class
+must satisfy database requirements and Hub RWX access, or select suitable classes
+in the QA patch before provisioning. On an existing instance, a larger requested
+size does not prove existing PVCs will expand; verify operator support and
+StorageClass expansion behavior separately. This change does not resize volumes.
 
 ## Instance name and existing deployments
 
@@ -43,6 +85,7 @@ Keep reusable component defaults in `base/`. Edit these files for the environmen
 
 | File | Settings |
 | --- | --- |
+| [`overlays/qa/platform-patch.yaml`](overlays/qa/platform-patch.yaml) | QA hostname, Route TLS Secret and storage sizes |
 | [`overlays/2.7/platform-patch.yaml`](overlays/2.7/platform-patch.yaml) | Database size, Hub size; add approved storage classes or component overrides here |
 | [`overlays/2.7-custom-hostname/platform-patch.yaml`](overlays/2.7-custom-hostname/platform-patch.yaml) | `hostname`, `route_host`, `route_tls_secret`, ingress and TLS mode |
 
@@ -122,12 +165,12 @@ and Secret payloads outside Git. The operator reads the referenced Secret to
 configure the custom Route's TLS certificate.
 
 Then use the render, dry-run and apply sequence below with
-`2.7-custom-hostname` selected.
+`qa` selected. Use `2.7-custom-hostname` only for the original generic example.
 
 ## Storage and component settings
 
-The `2.7` patch requests a 20Gi PostgreSQL volume and 10Gi of shared Hub file
-storage. These are small-lab starting sizes, not a production capacity or
+QA uses the sizes described above. The unchanged generic `2.7` patch requests
+a 20Gi PostgreSQL volume and 10Gi of shared Hub file storage. These are small-lab starting sizes, not a production capacity or
 availability design. Adjust them in `overlays/2.7/platform-patch.yaml`.
 
 Storage-class fields are omitted so generated PVCs use the cluster's default
@@ -149,7 +192,7 @@ instance, TLS Secret and patch namespace together.
 ## Render, validate and deploy
 
 To deploy through Argo CD, follow the
-[Application examples](../../examples/argocd/README.md) instead of applying the
+[QA Application examples](../../examples/argocd/qa/README.md) instead of applying the
 instance directly. They reference this same Kustomize overlay from Git.
 
 Confirm the operator CSV is `Succeeded`, image pulls are authorized, and the
@@ -162,7 +205,7 @@ oc get csv -n ansible-automation-platform
 oc wait --for=condition=Established \
   crd/ansibleautomationplatforms.aap.ansible.com --timeout=120s
 
-AAP_OVERLAY=instances/ansible-automation-platform/overlays/2.7-custom-hostname
+AAP_OVERLAY=instances/ansible-automation-platform/overlays/qa
 oc kustomize "$AAP_OVERLAY"
 oc apply --dry-run=server -k "$AAP_OVERLAY"
 oc apply -k "$AAP_OVERLAY"
@@ -214,14 +257,15 @@ oc create secret tls aap-route-tls-v2 \
   --key=/secure/path/renewed-tls.key
 ```
 
-Update the existing custom-hostname `platform-patch.yaml`:
+Update `overlays/qa/platform-patch.yaml` for QA (or the selected generic
+overlay's patch):
 
 ```yaml
 spec:
   route_tls_secret: aap-route-tls-v2
 ```
 
-Reapply `2.7-custom-hostname` and compare the certificate serial/fingerprint
+Reapply the selected overlay (`qa` for this environment) and compare the certificate serial/fingerprint
 served to clients with the replacement certificate. Changing the Secret reference
 provides an explicit spec change for the operator to reconcile; do not assume
 replacing data in the same Secret automatically refreshes the Route. If rollback
@@ -235,8 +279,15 @@ against the installed operator's CRD and repeat the acceptance checks above.
 
 ## Manifest validation
 
+The QA overlay and its Argo CD Applications were checked November 23, 2026.
+Rendering verified enabled Controller/Hub/EDA, `100G` database capacity, `10Gi`
+Hub RWX storage and the configured Route. Strict server dry-runs passed without
+persisting resources. See the [QA validation record](../../examples/argocd/qa/README.md#validation)
+for namespace substitutions and deployment-time checks. PROD contains only an
+empty `.gitkeep` file and has no Application.
+
 Rechecked November 23, 2026 (Eastern), using `oc` 4.22.8 and Kustomize 5.7.1:
-both instance overlays and both operator overlays render. The retained manifests
+both generic instance overlays and both operator overlays render. The retained manifests
 produce the same resources as before this documentation/overlay cleanup; the
 custom-hostname overlay creates only the AAP CR and references a manually supplied
 TLS Secret. The instance name remains `aap` without a suffix.
