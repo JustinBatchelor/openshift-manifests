@@ -1,0 +1,21 @@
+apiVersion: aap.ansible.com/v1alpha1
+kind: AnsibleAutomationPlatform
+metadata:
+  name: aap
+  namespace: ansible-automation-platform
+spec:
+  # Replace both values with the QA FQDN before deployment.
+  hostname: ansible.qa.example.com
+  route_host: ansible.qa.example.com
+  # Manually create this TLS Secret in the instance namespace.
+  route_tls_secret: aap-route-tls
+  database:
+    storage_requirements:
+      requests:
+        # 100 decimal GB of volume capacity, not 100Gi or a database data quota.
+        # Account for PostgreSQL/filesystem overhead and monitor free space.
+        storage: 100G
+  hub:
+    # Illustrative RWX content storage; Hub remains enabled in the shared base.
+    file_storage_size: 10Gi
+  # Controller and EDA also remain enabled through the shared base.

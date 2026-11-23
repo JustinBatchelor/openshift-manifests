@@ -13,7 +13,7 @@ After the operator is installed, deploy the
 to enable Controller, Automation Hub, and Event-Driven Ansible using the cluster's
 default storage class (RWX support is required for Hub).
 
-For GitOps deployment, use the [Argo CD Application examples](examples/argocd/README.md).
+For QA GitOps deployment, use the [QA Argo CD Application examples](examples/argocd/qa/README.md).
 They reference the operator and instance Kustomize overlays separately and walk
 through OLM installation, manual TLS Secret creation and instance synchronization.
 
@@ -65,28 +65,39 @@ instances/ansible-automation-platform/
     ├── 2.7
     │   ├── kustomization.yaml
     │   └── platform-patch.yaml
-    └── 2.7-custom-hostname
-        ├── kustomization.yaml
-        └── platform-patch.yaml
+    ├── 2.7-custom-hostname
+    │   ├── kustomization.yaml
+    │   └── platform-patch.yaml
+    ├── qa
+    │   ├── kustomization.yaml
+    │   └── platform-patch.yaml
+    └── prod
+        └── .gitkeep
 ```
 
-After completing the operator installation below, follow the instance README
-and run this from the repository root. Every instance overlay creates `aap`
-without a name suffix. The default overlay uses the operator's generated hostname
-and default TLS configuration:
+QA is the configured environment example. It enables Controller, Hub and EDA,
+requests `100G` of managed database storage and `10Gi` of Hub RWX file storage,
+and uses a custom Route with a manually created TLS Secret. Edit QA's
+[`platform-patch.yaml`](instances/ansible-automation-platform/overlays/qa/platform-patch.yaml)
+for hostname, TLS Secret reference and storage sizes. Render it from the repository
+root:
 
 ```sh
-oc apply -k instances/ansible-automation-platform/overlays/2.7
+oc kustomize instances/ansible-automation-platform/overlays/qa
 ```
 
-For a custom DNS name and manually supplied TLS certificate, use
-`instances/ansible-automation-platform/overlays/2.7-custom-hostname`.
-Edit hostname, Route host, TLS mode and Secret reference in its
-[`platform-patch.yaml`](instances/ansible-automation-platform/overlays/2.7-custom-hostname/platform-patch.yaml).
-Create the referenced TLS Secret manually before applying the custom-hostname
-overlay. Follow the [instance guide](instances/ansible-automation-platform/README.md)
-for DNS, Secret creation, patch settings and verification.
-Choose one instance overlay; they all manage the same `aap` resource.
+Follow the [instance guide](instances/ansible-automation-platform/README.md)
+for operator installation prerequisites, DNS, manual TLS Secret preparation and
+apply/verification steps, or use the [QA Argo CD guide](examples/argocd/qa/README.md).
+QA and future PROD are intended for separate clusters, each with its own GitOps
+installation. PROD is reserved with an empty `.gitkeep` file only; it has no
+Kustomization, deployable manifests or Argo CD Application.
+
+The existing `2.7` (generated hostname) and `2.7-custom-hostname` overlays and
+generic Argo CD examples remain available with their original settings. Every
+deployable instance overlay renders `aap` without a suffix. Select one overlay
+and one Application pair per cluster; these configurations manage the same
+resource identities in `ansible-automation-platform`.
 
 **Name change:** older revisions rendered `aap-jbatchel`. Applying this revision
 does not rename that resource or migrate its data; inspect existing instances
