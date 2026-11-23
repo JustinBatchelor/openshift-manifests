@@ -68,7 +68,7 @@ spec:
   route_tls_secret: aap-route-tls
 ```
 
-Replace **both** hostname values with the customer's FQDN, without `https://`, a
+Replace **both** hostname values with the intended FQDN, without `https://`, a
 port or a path. This repository uses a reserved example domain; replace it
 before issuance or deployment.
 
@@ -81,7 +81,7 @@ modifying an existing instance.
 This example terminates TLS at the OpenShift router; router-to-gateway traffic is
 HTTP. The certificate comes from `route_tls_secret`, in the AAP namespace. It does
 not use the passthrough/gateway certificate field `gateway_tls_secret_name`.
-If the customer requires encrypted backend traffic, select and validate a supported
+If encrypted backend traffic is required, select and validate a supported
 reencrypt or passthrough configuration separately; changing only the termination
 field is insufficient. See the [Red Hat deployment configuration reference](https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.7/install-configure_your_ansible_automation_platform_deployment).
 
@@ -179,7 +179,7 @@ oc get pods,pvc,route -n ansible-automation-platform
 oc get route -n ansible-automation-platform \
   -o custom-columns=NAME:.metadata.name,HOST:.spec.host,TERMINATION:.spec.tls.termination
 
-# Use the customer hostname and client trust store; do not disable TLS checking.
+# Use the configured hostname and client trust store; do not disable TLS checking.
 curl -I https://ansible.qa.example.com/
 ```
 
@@ -187,7 +187,7 @@ Inspect the gateway Route and confirm its host matches the patch, it is admitted
 and it presents the intended certificate. In a browser, verify the certificate
 SAN/chain, login, authenticated gateway/controller access, and logout. Confirm
 redirects remain on the custom hostname. Obtain the generated admin password
-through the OpenShift console and activate AAP with the customer's subscription.
+through the OpenShift console and activate AAP with your subscription.
 
 A forced-resolution check such as `curl --resolve` can isolate routing and TLS,
 but it is **not** proof of working DNS. Acceptance includes ordinary DNS lookup
@@ -223,7 +223,7 @@ provides an explicit spec change for the operator to reconcile; do not assume
 replacing data in the same Secret automatically refreshes the Route. If rollback
 is needed, restore the previous Secret reference in the patch and reapply it.
 
-The [customer walkthrough](https://github.com/JustinBatchelor/aap-custom-hostname)
+The [hostname walkthrough](https://github.com/JustinBatchelor/aap-custom-hostname)
 contains detailed TLS, DNS, rotation and rollback procedures, with
 [validation notes](https://github.com/JustinBatchelor/aap-custom-hostname/blob/main/docs/validation-notes.md)
 for the original custom-hostname test. On a new installation, validate the fields
@@ -244,5 +244,5 @@ server dry-run was not repeated for the November 23 cleanup.
 The target namespace was absent in the validation cluster, so server dry-runs
 used temporary resource names in an existing namespace. This checked schema and
 admission there, not the target namespace's policies or a new deployment. No
-resources were persisted. Repeat the dry-run in the customer's namespace, then
+resources were persisted. Repeat the dry-run in the target namespace, then
 verify DNS, TLS and application behavior after deployment.
